@@ -2973,42 +2973,67 @@ footer p,footer a{color:#64776a}
 
     // ========== ORDER ==========
     async function submitOrder() {
-      if (cart.length === 0) { showToast('✕ Panier vide', true); return; }
-      const name = document.getElementById('fullName').value.trim();
-      const phone = document.getElementById('phone').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const address = document.getElementById('address').value.trim();
-      const city = document.getElementById('city').value.trim();
-      const postal = document.getElementById('postalCode').value.trim();
-      const notes = document.getElementById('notes').value.trim();
-      if (!name || !phone || !address || !city) { showToast('✕ Champs obligatoires', true); return; }
-      let details = '';
-      cart.forEach(i => {
-        const p = products.find(pr => pr.id === i.productId);
-        if (p) details += `• ${p.name} × ${i.quantity} = ${(p.price * i.quantity).toLocaleString('fr-DZ')} DA\n`;
-      });
-      const fd = new FormData();
-      fd.append('_subject', `🛍 Commande ALMAS — ${name}`);
-      fd.append('_captcha', 'false');
-      fd.append('Nom', name);
-      fd.append('Téléphone', phone);
-      fd.append('Email', email);
-      fd.append('Adresse', address);
-      fd.append('Ville', city);
-      fd.append('Code postal', postal);
-      fd.append('Note', notes);
-      fd.append('Commande', details);
-      fd.append('Total', getCartTotal().toLocaleString('fr-DZ') + ' DA');
-      try {
-        const res = await fetch('https://formsubmit.co/rabhi.mohand05@gmail.com', { method: 'POST', body: fd });
-        if (res.ok) {
-          showToast('✓ Commande envoyée');
-          setTimeout(() => {
-            cart = []; updateCartUI(); renderProducts(); closeCartFn();
-            ['fullName','phone','email','address','city','postalCode','notes'].forEach(id => document.getElementById(id).value = '');
-          }, 2000);
-        } else showToast('✕ Erreur', true);
-      } catch (e) { showToast('✕ Erreur réseau', true); }
+  if (cart.length === 0) { showToast('✕ Panier vide', true); return; }
+  
+  const name = document.getElementById('fullName').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const address = document.getElementById('address').value.trim();
+  const city = document.getElementById('city').value.trim();
+  const postal = document.getElementById('postalCode').value.trim();
+  const notes = document.getElementById('notes').value.trim();
+
+  if (!name || !phone || !address || !city) { showToast('✕ Champs obligatoires', true); return; }
+
+  let details = '';
+  cart.forEach(i => {
+    const p = products.find(pr => pr.id === i.productId);
+    if (p) details += `• ${p.name} × ${i.quantity} = ${(p.price * i.quantity).toLocaleString('fr-DZ')} DA\n`;
+  });
+
+  const accessKey = "ea21d04c-2b4a-4c36-bd8f-8a96d9ee6adf"; 
+
+  const formData = {
+    access_key: accessKey,
+    subject: `🛍 Nouvelle Commande - ${name}`,
+    Nom: name,
+    Telephone: phone,
+    Email: email,
+    Adresse: address,
+    Ville: city,
+    "Code postal": postal,
+    Note: notes,
+    Commande: details,
+    Total: getCartTotal().toLocaleString('fr-DZ') + ' DA'
+  };
+
+  try {
+    const res = await fetch('https://api.web3forms.com/submit', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(formData)
+    });
+    
+    const result = await res.json();
+    
+    if (result.success) {
+      showToast('✓ Commande envoyée avec succès');
+      setTimeout(() => {
+        cart = []; 
+        updateCartUI(); 
+        renderProducts(); 
+        closeCartFn();
+        ['fullName','phone','email','address','city','postalCode','notes'].forEach(id => document.getElementById(id).value = '');
+      }, 2000);
+    } else {
+      showToast('✕ Erreur lors de l\'envoi', true);
+    }
+  } catch (e) { 
+    showToast('✕ Erreur réseau', true); 
+  }
     }
 
     // ========== OPEN/CLOSE CART ==========
